@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Main</title>
+    <!-- Required meta tags -->
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <!-- Bootstrap CSS -->
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+          integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" rel="stylesheet">
+</head>
+<body>
+<script>
+    function toggle(source) {
+        for (const checkbox of document.getElementsByClassName('custom-cb')) {
+            // noinspection JSUnfilteredForInLoop
+            checkbox['checked'] = source.checked;
+        }
+    }
+</script>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class=h-50 style="margin-top: 40px">
+                <form method="post" th:action="@{/logout}">
+                    <button class="float-right btn btn-primary" type="submit">Logout</button>
+                </form>
+            </div>
+            <form method="post" th:action="@{/edit}" th:object="${chosenUsersForm}">
+                <div class="d-grid gap-3">
+                    <div class="p-2">
+                        <button class="btn btn-outline-primary" name="action" type="submit" value="block">Block user
+                        </button>
+                        <button class="btn btn-outline-primary" name="action" type="submit" value="unblock">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-unlock" viewBox="0 0 16 16">
+                                <path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5V3a3 3 0 0 1 6 0v4a.5.5 0 0 1-1 0V3a2 2 0 0 0-2-2zM3 8a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H3z"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-outline-primary" name="action" type="submit" value="delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                 class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                <path fill-rule="evenodd"
+                                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!--                todo insert spacing-->
+                    <table class="table table-hover p-2">
+                        <thead>
+                        <tr>
+                            <th>
+                                <label><input onclick="toggle(this);" type="checkbox"/></label>
+                            </th>
+                            <th scope="col">User</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Registration date</th>
+                            <th scope="col">Last login date</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(users)}">
+                            <td colspan="2"> No users found</td>
+                        </tr>
+                        <tr th:each="user, iter : ${users}" onclick="selectRow(this)">
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input class="custom-control-input custom-cb" th:field="*{chosenUserIds}"
+                                           th:id="${iter.index}"
+                                           th:value="${user.id}"
+                                           type="checkbox"/>
+                                    <label class="custom-control-label" th:for="${iter.index}"
+                                           th:text="${iter.index + 1}">SomeNumber</label>
+
+                                </div>
+                            </td>
+                            <td th:text="${user.name}">someData</td>
+                            <td th:text="${user.email}">Email</td>
+                            <td th:text="${formatter.format(user.activity.registrationDate)}">Registration date</td>
+                            <td th:text="${formatter.format(user.activity.lastLoginDate)}">Last login date</td>
+                            <td>
+                                <span th:if="${user.enabled}">Enabled</span>
+                                <span th:unless="${user.enabled}">Blocked</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

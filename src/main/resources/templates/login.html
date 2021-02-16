@@ -31,6 +31,12 @@
                     <div th:if="${param.error}">
                         Invalid username or password.
                     </div>
+                    <div th:if="${param.blocked}">
+                        User is blocked
+                    </div>
+                    <div th:if="${param.notFound}">
+                        User is deleted
+                    </div>
                     <div th:if="${param.logout}">
                         You have been logged out.
                     </div>

@@ -15,14 +15,14 @@
     function toggle(source) {
         for (const checkbox of document.getElementsByClassName('custom-cb')) {
             // noinspection JSUnfilteredForInLoop
-            checkbox['checked'] = source.checked;
+            checkbox.checked = source.checked;
         }
     }
 </script>
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <div class=h-50 style="margin-top: 40px">
+            <div style="margin-top: 40px">
                 <form method="post" th:action="@{/logout}">
                     <button class="float-right btn btn-primary" type="submit">Logout</button>
                 </form>
@@ -47,7 +47,6 @@
                             </svg>
                         </button>
                     </div>
-                    <!--                todo insert spacing-->
                     <table class="table table-hover p-2">
                         <thead>
                         <tr>
@@ -65,7 +64,8 @@
                         <tr th:if="${#lists.isEmpty(users)}">
                             <td colspan="2"> No users found</td>
                         </tr>
-                        <tr th:each="user, iter : ${users}" onclick="selectRow(this)">
+                        <tr th:each="user, iter : ${users}"
+                            th:style="${blockedIds.contains(user.id)} or ${unblockedIds.contains(user.id)} ? 'background-color: aliceblue'">
                             <td>
                                 <div class="custom-control custom-checkbox">
                                     <input class="custom-control-input custom-cb" th:field="*{chosenUserIds}"

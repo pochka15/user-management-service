@@ -4,74 +4,96 @@ import com.pochka15.itra4.converter.UserToUserDtoConverter;
 import com.pochka15.itra4.domain.user.User;
 import com.pochka15.itra4.dto.UserDto;
 import com.pochka15.itra4.form.ChosenUsersForm;
-import com.pochka15.itra4.service.SecurityService;
 import com.pochka15.itra4.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.pochka15.itra4.service.SecurityService.closeRequestSession;
+import static com.pochka15.itra4.service.SessionService.closeRequestSession;
 
 @Controller
 public class AuthenticatedOperationsController {
     private final UserService userService;
     private final UserToUserDtoConverter userToUserDtoConverter;
-    private final SecurityService securityService;
 
     public AuthenticatedOperationsController(UserService UserService,
-                                             UserToUserDtoConverter userToUserDtoConverter,
-                                             SecurityService securityService) {
+                                             UserToUserDtoConverter userToUserDtoConverter) {
         this.userService = UserService;
         this.userToUserDtoConverter = userToUserDtoConverter;
-        this.securityService = securityService;
     }
 
     @GetMapping(path = "/")
     public String home(Model model) {
-        final Collection<UserDto> fetchedUsers = usersToDtos(userService.fetchAllUsers());
-        model.addAttribute("users", fetchedUsers);
-        model.addAttribute("formatter", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        model.addAttribute("chosenUsersForm", new ChosenUsersForm());
+        addHomeAttributes(model, Set.of(), Set.of());
         return "home";
     }
 
-    private List<UserDto> usersToDtos(Collection<? extends User> users) {
+    @GetMapping(path = "/with-blocked")
+    public String redirectWithBlockedIds(Model model, @ModelAttribute("blockedIds") Set<Long> blockedIds) {
+        addHomeAttributes(model, blockedIds, Set.of());
+        return "home";
+    }
+
+    @GetMapping(path = "/with-unblocked")
+    public String redirectWithUnblockedIds(Model model, @ModelAttribute("unblockedIds") Set<Long> unblockedIds) {
+        addHomeAttributes(model, Set.of(), unblockedIds);
+        return "home";
+    }
+
+    private Model addHomeAttributes(Model model, Set<Long> blockedIds, Set<Long> unblockedIds) {
+        return model.addAttribute("users", convertToDtos(userService.fetchAllUsers()))
+                .addAttribute("formatter", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                .addAttribute("chosenUsersForm", new ChosenUsersForm())
+                .addAttribute("unblockedIds", unblockedIds)
+                .addAttribute("blockedIds", blockedIds);
+    }
+
+    private List<UserDto> convertToDtos(Collection<? extends User> users) {
         return users.stream().map(userToUserDtoConverter::convert).collect(Collectors.toList());
     }
 
-
     @PostMapping(path = "/edit", params = "action=delete")
-    public String deleteUsers(@ModelAttribute ChosenUsersForm form, Principal principal, HttpServletRequest request) {
-        securityService.passAccessControl(principal.getName(),
-                                          () -> userService.deleteAll(form.getChosenUserIds()),
-                                          errorMessage -> closeRequestSession(request));
+    public String deleteUsers(@ModelAttribute ChosenUsersForm form) {
+        userService.deleteAll(form.getChosenUserIds());
         return "redirect:/";
     }
 
     @PostMapping(path = "/edit", params = "action=block")
-    public String blockUsers(@ModelAttribute ChosenUsersForm form, Principal principal, HttpServletRequest request) {
-        securityService.passAccessControl(principal.getName(),
-                                          () -> userService.blockUsersByIds(form.getChosenUserIds()),
-                                          errorMessage -> closeRequestSession(request));
-        return "redirect:/";
+    public RedirectView blockUsers(@ModelAttribute ChosenUsersForm form,
+                                   Principal principal,
+                                   HttpServletRequest request,
+                                   RedirectAttributes attributes) {
+        userService.blockUsersByIds(form.getChosenUserIds());
+        attributes.addFlashAttribute("blockedIds", form.getChosenUserIds());
+        userService.findByName(principal.getName()).ifPresent(user -> {
+            if (!user.isEnabled()) closeRequestSession(request);
+        });
+        return new RedirectView("/with-blocked");
     }
 
     @PostMapping(path = "/edit", params = "action=unblock")
-    public String unblockUsers(@ModelAttribute ChosenUsersForm form, Principal principal, HttpServletRequest request) {
-        securityService.passAccessControl(principal.getName(),
-                                          () -> userService.unblockUsersByIds(form.getChosenUserIds()),
-                                          errorMessage -> closeRequestSession(request));
-        return "redirect:/";
+    public RedirectView unblockUsers(@ModelAttribute ChosenUsersForm form,
+                                     Principal principal,
+                                     HttpServletRequest request,
+                                     RedirectAttributes attributes) {
+        userService.unblockUsersByIds(form.getChosenUserIds());
+        attributes.addFlashAttribute("unblockedIds", form.getChosenUserIds());
+        userService.findByName(principal.getName()).ifPresent(user -> {
+            if (!user.isEnabled()) closeRequestSession(request);
+        });
+        return new RedirectView("/with-unblocked");
     }
 }
 

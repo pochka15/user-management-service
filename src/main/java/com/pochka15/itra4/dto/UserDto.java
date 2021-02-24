@@ -3,6 +3,8 @@ package com.pochka15.itra4.dto;
 import com.pochka15.itra4.domain.user.UserActivity;
 import lombok.Data;
 
+// Эта структура данных чиста нужна для конкретного другого куска кода в контроллере.
+// нужно ли писать тут какие-то пояснения?
 @Data
 public class UserDto {
     private final boolean enabled;

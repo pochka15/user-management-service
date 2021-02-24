@@ -48,6 +48,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll();
     }
 
+    /**
+     * Configure user authentication using the jdbc dataSource
+     *
+     * @param auth expected to be provided by Spring by default
+     * @throws Exception when couldn't authenticate a user
+     */
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.jdbcAuthentication()

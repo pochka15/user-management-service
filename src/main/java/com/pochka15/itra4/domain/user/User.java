@@ -6,6 +6,7 @@ import javax.persistence.*;
 import java.util.Objects;
 import java.util.Set;
 
+// ok?
 @Entity
 @Builder
 @NoArgsConstructor

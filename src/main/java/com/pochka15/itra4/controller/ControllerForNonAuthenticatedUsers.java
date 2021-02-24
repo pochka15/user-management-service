@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import javax.validation.Valid;
 
 @Controller
-public class UserActivityController {
+public class ControllerForNonAuthenticatedUsers {
     private final CredentialsToUserConverter credentialsToUserConverter;
     private final UserService userService;
 
-    public UserActivityController(CredentialsToUserConverter credentialsToUserConverter,
-                                  UserService userService) {
+    //    Есть ли тут смысл делать привязку не к конкретной реализации CredentialsToUserConverter, а создать
+//    интерфейс конвертера? Или тут это не важно?
+    public ControllerForNonAuthenticatedUsers(CredentialsToUserConverter credentialsToUserConverter,
+                                              UserService userService) {
         this.credentialsToUserConverter = credentialsToUserConverter;
         this.userService = userService;
     }
@@ -29,7 +31,8 @@ public class UserActivityController {
     }
 
     @PostMapping(path = "/register")
-    public String registerUser(@ModelAttribute("credentials") @Valid CredentialsForm credentials, BindingResult result) {
+    public String registerUser(@ModelAttribute("credentials") @Valid CredentialsForm credentials,
+                               BindingResult result) {
         if (result.hasErrors()) return "registration";
         userService.saveNew(credentialsToUserConverter.convert(credentials));
         return "redirect:login";

@@ -18,18 +18,22 @@ import java.security.Principal;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.pochka15.itra4.service.SessionService.closeRequestSession;
 
+/**
+ * Controller for handling requests from authenticated users
+ */
 @Controller
-public class AuthenticatedOperationsController {
+public class ControllerForAuthenticatedUsers {
     private final UserService userService;
     private final UserToUserDtoConverter userToUserDtoConverter;
 
-    public AuthenticatedOperationsController(UserService UserService,
-                                             UserToUserDtoConverter userToUserDtoConverter) {
+    public ControllerForAuthenticatedUsers(UserService UserService,
+                                           UserToUserDtoConverter userToUserDtoConverter) {
         this.userService = UserService;
         this.userToUserDtoConverter = userToUserDtoConverter;
     }
@@ -52,6 +56,16 @@ public class AuthenticatedOperationsController {
         return "home";
     }
 
+//    Привязка к Long id, не очень?!
+
+    /**
+     * All the attributes that must be added for the "home" template
+     *
+     * @param model        object on which attributes will be added
+     * @param blockedIds   set containing ids of the users that are blocked
+     * @param unblockedIds set containing ids of the users that are unblocked
+     * @return updated model instance
+     */
     private Model addHomeAttributes(Model model, Set<Long> blockedIds, Set<Long> unblockedIds) {
         return model.addAttribute("users", convertToDtos(userService.fetchAllUsers()))
                 .addAttribute("formatter", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
@@ -77,7 +91,9 @@ public class AuthenticatedOperationsController {
                                    RedirectAttributes attributes) {
         userService.blockUsersByIds(form.getChosenUserIds());
         attributes.addFlashAttribute("blockedIds", form.getChosenUserIds());
-        userService.findByName(principal.getName()).ifPresent(user -> {
+//        Close current user's session if he blocked himself
+        Optional<User> foundUser = userService.findByName(principal.getName());
+        foundUser.ifPresent(user -> {
             if (!user.isEnabled()) closeRequestSession(request);
         });
         return new RedirectView("/with-blocked");
@@ -90,9 +106,6 @@ public class AuthenticatedOperationsController {
                                      RedirectAttributes attributes) {
         userService.unblockUsersByIds(form.getChosenUserIds());
         attributes.addFlashAttribute("unblockedIds", form.getChosenUserIds());
-        userService.findByName(principal.getName()).ifPresent(user -> {
-            if (!user.isEnabled()) closeRequestSession(request);
-        });
         return new RedirectView("/with-unblocked");
     }
 }

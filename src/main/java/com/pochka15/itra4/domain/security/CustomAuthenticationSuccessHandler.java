@@ -10,6 +10,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+/**
+ * Handler that is used after an authentication succeeds
+ */
 @Component
 public class CustomAuthenticationSuccessHandler extends
         SavedRequestAwareAuthenticationSuccessHandler {
@@ -20,6 +23,15 @@ public class CustomAuthenticationSuccessHandler extends
         this.userService = userService;
     }
 
+    /**
+     * Refresh last login date on success.
+     *
+     * @param request
+     * @param response
+     * @param authentication
+     * @throws IOException
+     * @throws ServletException
+     */
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
